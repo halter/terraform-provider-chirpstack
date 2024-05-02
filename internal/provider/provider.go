@@ -9,7 +9,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/halter-corp/halter-common-go/kit/third_party/chirpstack_kit"
+	"github.com/halter-corp/terraform-provider-chirpstack/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -75,8 +75,8 @@ func (p *ChirpstackProvider) Configure(ctx context.Context, req provider.Configu
 	// if data.Endpoint.IsNull() { /* ... */ }
 
 	// Example client configuration for data sources and resources
-	client := http.DefaultClient
-	resp.DataSourceData = client
+	defaultClient := http.DefaultClient
+	resp.DataSourceData = defaultClient
 
 	host := data.Host.ValueString()
 	if host == "" {
@@ -91,19 +91,21 @@ func (p *ChirpstackProvider) Configure(ctx context.Context, req provider.Configu
 		key = os.Getenv("CHIRPSTACK_KEY")
 	}
 
-	conn, err := chirpstack_kit.GetChirpstackConn(ctx, host, port, key)
+	conn, err := client.GetChirpstackConn(ctx, host, port, key)
 	if err != nil {
 		resp.Diagnostics.AddError("could not establish chirpstack connection", err.Error())
 		return
 	}
 
-	resp.ResourceData = chirpstack_kit.NewChirpstackKit(conn)
+	resp.ResourceData = client.NewChirpstack(conn)
 }
 
 func (p *ChirpstackProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewExampleResource,
 		NewTenantResource,
+		NewApplicationResource,
+		NewDeviceProfileResource,
 	}
 }
 

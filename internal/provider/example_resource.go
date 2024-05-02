@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/halter-corp/halter-common-go/kit/third_party/chirpstack_kit"
+	"github.com/halter-corp/terraform-provider-chirpstack/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -28,7 +28,7 @@ func NewExampleResource() resource.Resource {
 
 // ExampleResource defines the resource implementation.
 type ExampleResource struct {
-	chirpstack chirpstack_kit.ChirpstackKit
+	chirpstack client.Chirpstack
 }
 
 // ExampleResourceModel describes the resource data model.
@@ -75,7 +75,7 @@ func (r *ExampleResource) Configure(ctx context.Context, req resource.ConfigureR
 		return
 	}
 
-	chirpstack, ok := req.ProviderData.(chirpstack_kit.ChirpstackKit)
+	chirpstack, ok := req.ProviderData.(client.Chirpstack)
 
 	if !ok {
 		resp.Diagnostics.AddError(

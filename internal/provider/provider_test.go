@@ -25,12 +25,12 @@ func testAccPreCheck(t *testing.T) {
 	// function.
 
 	if os.Getenv("CHIRPSTACK_HOST") == "" {
-		t.Fatalf("environment variable CHIRPSTACK_HOST is not set")
+		t.Skip("environment variable CHIRPSTACK_HOST is not set")
 	}
 	if os.Getenv("CHIRPSTACK_PORT") == "" {
-		t.Fatalf("environment variable CHIRPSTACK_PORT is not set")
+		t.Skip("environment variable CHIRPSTACK_PORT is not set")
 	}
 	if os.Getenv("CHIRPSTACK_KEY") == "" {
-		t.Fatalf("environment variable CHIRPSTACK_KEY is not set")
+		t.Skip("environment variable CHIRPSTACK_KEY is not set")
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/chirpstack/chirpstack/api/go/v4/api"
-	"github.com/halter-corp/halter-common-go/kit/third_party/chirpstack_kit"
+	"github.com/halter-corp/terraform-provider-chirpstack/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -27,7 +27,7 @@ func NewTenantResource() resource.Resource {
 
 // TenantResource defines the resource implementation.
 type TenantResource struct {
-	chirpstack chirpstack_kit.ChirpstackKit
+	chirpstack client.Chirpstack
 }
 
 // TenantResourceModel describes the resource data model.
@@ -72,7 +72,7 @@ func (r *TenantResource) Configure(ctx context.Context, req resource.ConfigureRe
 		return
 	}
 
-	chirpstack, ok := req.ProviderData.(chirpstack_kit.ChirpstackKit)
+	chirpstack, ok := req.ProviderData.(client.Chirpstack)
 
 	if !ok {
 		resp.Diagnostics.AddError(
