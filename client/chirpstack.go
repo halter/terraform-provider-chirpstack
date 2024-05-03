@@ -29,6 +29,12 @@ type Chirpstack interface {
 	UpdateApplication(ctx context.Context, application *api.Application) error
 	DeleteApplication(ctx context.Context, id string) error
 
+	// integrations
+	CreateHttpIntegration(ctx context.Context, integration *api.HttpIntegration) error
+	GetHttpIntegration(ctx context.Context, applicationId string) (*api.HttpIntegration, error)
+	UpdateHttpIntegration(ctx context.Context, integration *api.HttpIntegration) error
+	DeleteHttpIntegration(ctx context.Context, applicationId string) error
+
 	// messaging
 	Enqueue(ctx context.Context, request *api.EnqueueDeviceQueueItemRequest) (*api.EnqueueDeviceQueueItemResponse, error)
 	MulticastEnqueue(ctx context.Context, request *api.EnqueueMulticastGroupQueueItemRequest) (*api.EnqueueMulticastGroupQueueItemResponse, error)

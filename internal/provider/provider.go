@@ -106,6 +106,7 @@ func (p *ChirpstackProvider) Resources(ctx context.Context) []func() resource.Re
 		NewTenantResource,
 		NewApplicationResource,
 		NewDeviceProfileResource,
+		NewHttpIntegrationResource,
 	}
 }
 

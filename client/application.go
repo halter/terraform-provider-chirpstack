@@ -67,3 +67,44 @@ func (c *chirpstack) DeleteApplication(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+func (c *chirpstack) GetHttpIntegration(ctx context.Context, applicationId string) (*api.HttpIntegration, error) {
+	req := api.GetHttpIntegrationRequest{
+		ApplicationId: applicationId,
+	}
+	resp, err := c.applicationServiceClient.GetHttpIntegration(ctx, &req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get http integration for application id %s; err: %s;", applicationId, err)
+	}
+	return resp.Integration, nil
+}
+func (c *chirpstack) CreateHttpIntegration(ctx context.Context, integration *api.HttpIntegration) error {
+	req := api.CreateHttpIntegrationRequest{
+		Integration: integration,
+	}
+	_, err := c.applicationServiceClient.CreateHttpIntegration(ctx, &req)
+	if err != nil {
+		return fmt.Errorf("failed to create http integration %s; err: %s;", integration, err)
+	}
+	return nil
+}
+func (c *chirpstack) UpdateHttpIntegration(ctx context.Context, integration *api.HttpIntegration) error {
+	req := api.UpdateHttpIntegrationRequest{
+		Integration: integration,
+	}
+	_, err := c.applicationServiceClient.UpdateHttpIntegration(ctx, &req)
+	if err != nil {
+		return fmt.Errorf("failed to update http integration %s; err: %s;", integration, err)
+	}
+	return nil
+}
+func (c *chirpstack) DeleteHttpIntegration(ctx context.Context, applicationId string) error {
+	req := api.DeleteHttpIntegrationRequest{
+		ApplicationId: applicationId,
+	}
+	_, err := c.applicationServiceClient.DeleteHttpIntegration(ctx, &req)
+	if err != nil {
+		return fmt.Errorf("failed to delete http integration for application id %s; err: %s;", applicationId, err)
+	}
+	return nil
+}
