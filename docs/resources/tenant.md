@@ -28,7 +28,16 @@ resource "chirpstack_tenant" "tenant" {
 
 ### Optional
 
+- `can_have_gateways` (Boolean) Can the tenant create and "own" Gateways?
 - `description` (String) Tenant description
+- `max_device_count` (Number) Max. device count for tenant. When set to 0, the tenant can have unlimited devices.
+- `max_gateway_count` (Number) Max. gateway count for tenant. When set to 0, the tenant can have unlimited gateways.
+- `private_gateways_down` (Boolean) Private gateways (downlink).
+If enabled, then other tenants will not be able to schedule downlink
+messages through the gateways of this tenant. For example, in case you
+do want to share uplinks with other tenants (private_gateways_up=false),
+but you want to prevent other tenants from using gateway airtime.
+- `private_gateways_up` (Boolean) Private gateways (uplink). If enabled, then uplink messages will not be shared with other tenants.
 
 ### Read-Only
 

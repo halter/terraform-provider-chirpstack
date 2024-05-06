@@ -30,16 +30,12 @@ func (c *chirpstack) GetTenant(ctx context.Context, id string) (*api.Tenant, err
 	return resp.Tenant, nil
 }
 
-func (c *chirpstack) CreateTenant(ctx context.Context, name, description string) (string, error) {
-	createTenantsRequest := api.CreateTenantRequest{
-		Tenant: &api.Tenant{
-			Name:        name,
-			Description: description,
-		},
-	}
-	listTenantsResponse, err := c.tenantServiceClient.Create(ctx, &createTenantsRequest)
+func (c *chirpstack) CreateTenant(ctx context.Context, tenant *api.Tenant) (string, error) {
+	listTenantsResponse, err := c.tenantServiceClient.Create(ctx, &api.CreateTenantRequest{
+		Tenant: tenant,
+	})
 	if err != nil {
-		return "", fmt.Errorf("failed to create tenant %s; err: %s;", name, err)
+		return "", fmt.Errorf("failed to create tenant %+v; err: %s;", tenant, err)
 	}
 	return listTenantsResponse.Id, nil
 }

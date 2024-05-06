@@ -21,6 +21,7 @@ func TestAccTenantResource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("chirpstack_tenant.test", "id"),
 					resource.TestCheckResourceAttr("chirpstack_tenant.test", "name", "one"),
+					resource.TestCheckResourceAttr("chirpstack_tenant.test", "can_have_gateways", "true"),
 				),
 			},
 			// ImportState testing
@@ -45,6 +46,7 @@ func testAccTenantResourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "chirpstack_tenant" "test" {
   name = %[1]q
+  can_have_gateways = true
 }
 `, name)
 }

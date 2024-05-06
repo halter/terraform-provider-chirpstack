@@ -32,9 +32,14 @@ type TenantResource struct {
 
 // TenantResourceModel describes the resource data model.
 type TenantResourceModel struct {
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	Id          types.String `tfsdk:"id"`
+	Name                types.String `tfsdk:"name"`
+	Description         types.String `tfsdk:"description"`
+	Id                  types.String `tfsdk:"id"`
+	CanHaveGateways     types.Bool   `tfsdk:"can_have_gateways"`
+	MaxGatewayCount     types.Int64  `tfsdk:"max_gateway_count"`
+	MaxDeviceCount      types.Int64  `tfsdk:"max_device_count"`
+	PrivateGatewaysUp   types.Bool   `tfsdk:"private_gateways_up"`
+	PrivateGatewaysDown types.Bool   `tfsdk:"private_gateways_down"`
 }
 
 func (r *TenantResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -62,6 +67,35 @@ func (r *TenantResource) Schema(ctx context.Context, req resource.SchemaRequest,
 				MarkdownDescription: "Tenant description",
 				Optional:            true,
 			},
+			"can_have_gateways": schema.BoolAttribute{
+				MarkdownDescription: `Can the tenant create and "own" Gateways?`,
+				Optional:            true,
+				Computed:            true,
+			},
+			"max_gateway_count": schema.Int64Attribute{
+				MarkdownDescription: "Max. gateway count for tenant. When set to 0, the tenant can have unlimited gateways.",
+				Optional:            true,
+				Computed:            true,
+			},
+			"max_device_count": schema.Int64Attribute{
+				MarkdownDescription: "Max. device count for tenant. When set to 0, the tenant can have unlimited devices.",
+				Optional:            true,
+				Computed:            true,
+			},
+			"private_gateways_up": schema.BoolAttribute{
+				MarkdownDescription: "Private gateways (uplink). If enabled, then uplink messages will not be shared with other tenants.",
+				Optional:            true,
+				Computed:            true,
+			},
+			"private_gateways_down": schema.BoolAttribute{
+				MarkdownDescription: `Private gateways (downlink).
+If enabled, then other tenants will not be able to schedule downlink
+messages through the gateways of this tenant. For example, in case you
+do want to share uplinks with other tenants (private_gateways_up=false),
+but you want to prevent other tenants from using gateway airtime.`,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -85,6 +119,42 @@ func (r *TenantResource) Configure(ctx context.Context, req resource.ConfigureRe
 
 	r.chirpstack = chirpstack
 }
+func tenantFromData(data *TenantResourceModel) *api.Tenant {
+	tenant := api.Tenant{
+		Id:   data.Id.ValueString(),
+		Name: data.Name.ValueString(),
+	}
+	if !data.Description.IsNull() {
+		tenant.Description = data.Description.ValueString()
+	}
+	if !data.CanHaveGateways.IsNull() {
+		tenant.CanHaveGateways = data.CanHaveGateways.ValueBool()
+	}
+	if !data.MaxGatewayCount.IsNull() {
+		tenant.MaxGatewayCount = uint32(data.MaxGatewayCount.ValueInt64())
+	}
+	if !data.MaxDeviceCount.IsNull() {
+		tenant.MaxDeviceCount = uint32(data.MaxDeviceCount.ValueInt64())
+	}
+	if !data.PrivateGatewaysUp.IsNull() {
+		tenant.PrivateGatewaysUp = data.PrivateGatewaysUp.ValueBool()
+	}
+	if !data.PrivateGatewaysDown.IsNull() {
+		tenant.PrivateGatewaysDown = data.PrivateGatewaysDown.ValueBool()
+	}
+	return &tenant
+}
+func tenantToData(tenant *api.Tenant, data *TenantResourceModel) {
+	data.Name = types.StringValue(tenant.Name)
+	if tenant.Description != "" {
+		data.Description = types.StringValue(tenant.Description)
+	}
+	data.CanHaveGateways = types.BoolValue(tenant.CanHaveGateways)
+	data.MaxGatewayCount = types.Int64Value(int64(tenant.MaxGatewayCount))
+	data.MaxDeviceCount = types.Int64Value(int64(tenant.MaxDeviceCount))
+	data.PrivateGatewaysUp = types.BoolValue(tenant.PrivateGatewaysUp)
+	data.PrivateGatewaysDown = types.BoolValue(tenant.PrivateGatewaysDown)
+}
 
 func (r *TenantResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data TenantResourceModel
@@ -103,7 +173,8 @@ func (r *TenantResource) Create(ctx context.Context, req resource.CreateRequest,
 	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create tenant, got error: %s", err))
 	//     return
 	// }
-	id, err := r.chirpstack.CreateTenant(ctx, data.Name.ValueString(), data.Description.ValueString())
+	tenant := tenantFromData(&data)
+	id, err := r.chirpstack.CreateTenant(ctx, tenant)
 	if err != nil {
 		resp.Diagnostics.AddError("Chirpstack Error", fmt.Sprintf("Unable to create tenant, got error: %s", err))
 		return
@@ -112,6 +183,7 @@ func (r *TenantResource) Create(ctx context.Context, req resource.CreateRequest,
 	// For the purposes of this tenant code, hardcoding a response value to
 	// save into the Terraform state.
 	data.Id = types.StringValue(id)
+	tenantToData(tenant, &data)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -144,10 +216,7 @@ func (r *TenantResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	data.Name = types.StringValue(tenant.Name)
-	if tenant.Description != "" {
-		data.Description = types.StringValue(tenant.Description)
-	}
+	tenantToData(tenant, &data)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -170,15 +239,13 @@ func (r *TenantResource) Update(ctx context.Context, req resource.UpdateRequest,
 	//     resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update tenant, got error: %s", err))
 	//     return
 	// }
-	err := r.chirpstack.UpdateTenant(ctx, &api.Tenant{
-		Id:          data.Id.ValueString(),
-		Name:        data.Name.ValueString(),
-		Description: data.Description.ValueString(),
-	})
+	tenant := tenantFromData(&data)
+	err := r.chirpstack.UpdateTenant(ctx, tenant)
 	if err != nil {
 		resp.Diagnostics.AddError("Chirpstack Error", fmt.Sprintf("Unable to update tenant, got error: %s", err))
 		return
 	}
+	tenantToData(tenant, &data)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

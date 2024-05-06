@@ -16,7 +16,7 @@ import (
 
 type Chirpstack interface {
 	// tenant
-	CreateTenant(ctx context.Context, name, description string) (string, error)
+	CreateTenant(ctx context.Context, tenant *api.Tenant) (string, error)
 	GetTenant(ctx context.Context, id string) (*api.Tenant, error)
 	UpdateTenant(ctx context.Context, tenant *api.Tenant) error
 	DeleteTenant(ctx context.Context, id string) error
