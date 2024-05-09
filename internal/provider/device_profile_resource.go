@@ -49,6 +49,7 @@ type DeviceProfileResourceModel struct {
 	DeviceSupportsOTAA           types.Bool   `tfsdk:"device_supports_otaa"`
 	DeviceSupportsClassB         types.Bool   `tfsdk:"device_supports_class_b"`
 	DeviceSupportsClassC         types.Bool   `tfsdk:"device_supports_class_c"`
+	ClassCTimeout                types.Int64  `tfsdk:"class_c_timeout"`
 }
 
 func (r *DeviceProfileResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -128,6 +129,11 @@ func (r *DeviceProfileResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: "Device supports Class-C",
 				Optional:            true,
 			},
+			"class_c_timeout": schema.Int64Attribute{
+				MarkdownDescription: "Class-C timeout (seconds). This is the maximum time ChirpStack will wait to receive an acknowledgement from the device (if requested).",
+				Optional:            true,
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -198,6 +204,7 @@ func deviceProfileFromData(data *DeviceProfileResourceModel) *api.DeviceProfile 
 	if !data.DeviceSupportsClassC.IsNull() {
 		deviceProfile.SupportsClassC = data.DeviceSupportsClassC.ValueBool()
 	}
+	deviceProfile.ClassCTimeout = uint32(data.ClassCTimeout.ValueInt64())
 
 	return deviceProfile
 }
@@ -226,6 +233,7 @@ func deviceProfileToData(deviceProfile *api.DeviceProfile, data *DeviceProfileRe
 	data.DeviceSupportsOTAA = types.BoolValue(deviceProfile.SupportsOtaa)
 	data.DeviceSupportsClassB = types.BoolValue(deviceProfile.SupportsClassB)
 	data.DeviceSupportsClassC = types.BoolValue(deviceProfile.SupportsClassC)
+	data.ClassCTimeout = types.Int64Value(int64(deviceProfile.ClassCTimeout))
 }
 
 func (r *DeviceProfileResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -256,6 +264,7 @@ func (r *DeviceProfileResource) Create(ctx context.Context, req resource.CreateR
 	// For the purposes of this device profile code, hardcoding a response value to
 	// save into the Terraform state.
 	data.Id = types.StringValue(id)
+	deviceProfileToData(deviceProfile, &data)
 
 	// Write logs using the tflog package
 	// Documentation: https://terraform.io/plugin/log
@@ -317,6 +326,7 @@ func (r *DeviceProfileResource) Update(ctx context.Context, req resource.UpdateR
 		resp.Diagnostics.AddError("Chirpstack Error", fmt.Sprintf("Unable to update device profile, got error: %s", err))
 		return
 	}
+	deviceProfileToData(deviceProfile, &data)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

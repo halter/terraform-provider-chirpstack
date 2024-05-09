@@ -46,6 +46,7 @@ resource "chirpstack_device_profile" "mydeviceprofile" {
 
 - `adr_algorithm` (String) The ADR algorithm that will be used for controlling the device data-rate.
 - `allow_roaming` (Boolean) If enabled (and if roaming is configured on the server), this allows the device to use roaming.
+- `class_c_timeout` (Number) Class-C timeout (seconds). This is the maximum time ChirpStack will wait to receive an acknowledgement from the device (if requested).
 - `description` (String) Device profile description
 - `device_status_request_frequency` (Number) Frequency to initiate an End-Device status request (request/day). Set to 0 to disable.
 - `device_supports_class_b` (Boolean) Device supports Class-B
